@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#020604" />
+  <title>Shanny // Project Command Center</title>
+  <style>
+    :root{
+      --bg:#020604;
+      --panel:#07110b;
+      --panel-2:#0a1810;
+      --line:#153d22;
+      --green:#67ff8f;
+      --green-2:#20e763;
+      --muted:#75a582;
+      --amber:#ffd166;
+      --red:#ff5d73;
+      --cyan:#62e7ff;
+      --shadow:0 0 20px rgba(51,255,110,.10);
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      min-height:100vh;
+      background:
+        radial-gradient(circle at 15% 10%, rgba(34,255,105,.06), transparent 25%),
+        radial-gradient(circle at 85% 80%, rgba(34,255,105,.045), transparent 24%),
+        var(--bg);
+      color:var(--green);
+      font-family:"Courier New", Consolas, Monaco, monospace;
+      overflow-x:hidden;
+    }
+
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      z-index:99;
+      background:repeating-linear-gradient(
+        to bottom,
+        rgba(255,255,255,0.018) 0px,
+        rgba(255,255,255,0.018) 1px,
+        transparent 2px,
+        transparent 4px
+      );
+      mix-blend-mode:screen;
+      opacity:.38;
+    }
+
+    #matrix{
+      position:fixed;
+      inset:0;
+      z-index:-2;
+      width:100%;
+      height:100%;
+      opacity:.18;
+    }
+
+    .vignette{
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      z-index:-1;
+      background:radial-gradient(circle, transparent 40%, rgba(0,0,0,.72) 100%);
+    }
+
+    .shell{
+      width:min(1380px, 94vw);
+      margin:0 auto;
+      padding:30px 0 48px;
+    }
+
+    .terminal{
+      border:1px solid var(--line);
+      background:rgba(3,10,6,.90);
+      box-shadow:var(--shadow), inset 0 0 40px rgba(0,0,0,.35);
+      backdrop-filter:blur(9px);
+    }
+
+    .terminal-bar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:20px;
+      padding:10px 14px;
+      border-bottom:1px solid var(--line);
+      background:#061008;
+      color:var(--muted);
+      font-size:12px;
+      text-transform:uppercase;
+      letter-spacing:.12em;
+    }
+
+    .terminal-bar-left{
+      display:flex;
+      align-items:center;
+      gap:9px;
+    }
+
+    .dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+    .dot.red{background:#ff5f56}
+    .dot.yellow{background:#ffbd2e}
+    .dot.green{background:#27c93f}
+
+    .status-pulse{
+      display:inline-flex;
+      align-items:center;
+      gap:7px;
+      color:var(--green);
+    }
+    .status-pulse::before{
+      content:"";
+      width:7px;height:7px;border-radius:50%;
+      background:var(--green);
+      box-shadow:0 0 12px var(--green);
+      animation:pulse 1.8s infinite;
+    }
+
+    @keyframes pulse{
+      0%,100%{opacity:1;transform:scale(1)}
+      50%{opacity:.45;transform:scale(.7)}
+    }
+
+    .hero{
+      display:grid;
+      grid-template-columns:1.35fr .65fr;
+      gap:24px;
+      padding:34px 30px 26px;
+      border-bottom:1px solid var(--line);
+    }
+
+    .prompt{
+      color:var(--muted);
+      font-size:13px;
+      margin-bottom:10px;
+    }
+
+    .hero h1{
+      margin:0;
+      font-size:clamp(38px, 7vw, 92px);
+      line-height:.88;
+      letter-spacing:-.075em;
+      text-transform:uppercase;
+      text-shadow:0 0 25px rgba(103,255,143,.16);
+    }
+
+    .hero h1 span{
+      display:block;
+      color:#d8ffe3;
+    }
+
+    .hero-copy{
+      margin-top:22px;
+      color:#9bc9a7;
+      max-width:780px;
+      line-height:1.7;
+      font-size:14px;
+    }
+
+    .typing-line{
+      margin-top:22px;
+      font-size:14px;
+      color:var(--cyan);
+      min-height:20px;
+    }
+
+    .cursor{
+      display:inline-block;
+      width:8px;
+      height:16px;
+      background:var(--green);
+      vertical-align:-3px;
+      margin-left:5px;
+      animation:blink .85s steps(1) infinite;
+    }
+
+    @keyframes blink{50%{opacity:0}}
+
+    .hero-side{
+      border-left:1px dashed var(--line);
+      padding-left:24px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+    }
+
+    .meta-list{
+      display:grid;
+      gap:10px;
+      font-size:12px;
+      color:var(--muted);
+    }
+    .meta-row{
+      display:flex;
+      justify-content:space-between;
+      gap:14px;
+      padding-bottom:9px;
+      border-bottom:1px dotted rgba(103,255,143,.16);
+    }
+    .meta-row strong{color:var(--green);font-weight:700}
+
+    .big-count{
+      margin-top:28px;
+      font-size:clamp(48px, 8vw, 88px);
+      line-height:.8;
+      color:#e4ffeb;
+      letter-spacing:-.08em;
+    }
+    .big-count small{
+      display:block;
+      margin-top:13px;
+      color:var(--muted);
+      letter-spacing:.1em;
+      font-size:10px;
+    }
+
+    .controls{
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:12px;
+      padding:18px;
+      border-bottom:1px solid var(--line);
+      position:sticky;
+      top:0;
+      z-index:10;
+      background:rgba(3,10,6,.95);
+      backdrop-filter:blur(12px);
+    }
+
+    .search-wrap{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      border:1px solid var(--line);
+      background:#041008;
+      padding:0 14px;
+    }
+    .search-wrap span{color:var(--green)}
+    input{
+      width:100%;
+      border:0;
+      outline:0;
+      padding:14px 0;
+      background:transparent;
+      color:#dfffe7;
+      font:inherit;
+    }
+    input::placeholder{color:#4e7759}
+
+    .filter-buttons{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    button{
+      border:1px solid var(--line);
+      background:#07130b;
+      color:var(--muted);
+      padding:0 14px;
+      font:inherit;
+      font-size:12px;
+      cursor:pointer;
+      min-height:46px;
+      transition:.18s ease;
+    }
+    button:hover, button.active{
+      border-color:var(--green-2);
+      color:var(--green);
+      box-shadow:inset 0 0 18px rgba(32,231,99,.08);
+      transform:translateY(-1px);
+    }
+
+    .content{
+      padding:22px;
+    }
+
+    .section-heading{
+      display:flex;
+      justify-content:space-between;
+      align-items:end;
+      gap:16px;
+      margin:10px 0 14px;
+    }
+    .section-heading h2{
+      margin:0;
+      color:#dffff0;
+      font-size:14px;
+      text-transform:uppercase;
+      letter-spacing:.16em;
+    }
+    .section-heading span{
+      color:#52755d;
+      font-size:11px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(12, 1fr);
+      gap:12px;
+    }
+
+    .project{
+      grid-column:span 4;
+      min-height:235px;
+      border:1px solid var(--line);
+      background:
+        linear-gradient(180deg, rgba(14,33,19,.74), rgba(3,10,6,.92));
+      padding:18px;
+      position:relative;
+      overflow:hidden;
+      transition:.22s ease;
+      cursor:pointer;
+    }
+
+    .project::after{
+      content:"";
+      position:absolute;
+      left:-100%;
+      top:0;
+      width:60%;
+      height:100%;
+      background:linear-gradient(90deg, transparent, rgba(103,255,143,.05), transparent);
+      transform:skewX(-20deg);
+      transition:left .5s ease;
+    }
+
+    .project:hover{
+      border-color:#2dbf55;
+      transform:translateY(-3px);
+      box-shadow:0 10px 35px rgba(0,0,0,.35), 0 0 22px rgba(64,255,111,.07);
+    }
+    .project:hover::after{left:150%}
+
+    .project.featured{grid-column:span 8}
+    .project.wip{
+      border-style:dashed;
+      background:
+        repeating-linear-gradient(135deg, rgba(255,209,102,.025) 0 10px, transparent 10px 20px),
+        rgba(10,12,6,.88);
+    }
+
+    .project-head{
+      display:flex;
+      justify-content:space-between;
+      gap:15px;
+      align-items:flex-start;
+    }
+
+    .project-index{
+      color:#41624a;
+      font-size:11px;
+      margin-bottom:9px;
+    }
+
+    .project h3{
+      margin:0;
+      color:#e6ffec;
+      font-size:clamp(18px, 2.1vw, 29px);
+      line-height:1.05;
+      letter-spacing:-.04em;
+      text-transform:uppercase;
+    }
+
+    .badge{
+      white-space:nowrap;
+      border:1px solid;
+      padding:5px 7px;
+      font-size:9px;
+      letter-spacing:.1em;
+    }
+    .badge.live{
+      color:var(--green);
+      border-color:#227a3a;
+      background:rgba(32,231,99,.06);
+    }
+    .badge.wip{
+      color:var(--amber);
+      border-color:#6b5921;
+      background:rgba(255,209,102,.06);
+    }
+
+    .project p{
+      color:#769782;
+      font-size:12px;
+      line-height:1.65;
+      max-width:650px;
+      margin:18px 0 30px;
+    }
+
+    .tags{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+      margin-top:auto;
+    }
+    .tag{
+      border:1px solid #163d22;
+      color:#73a97f;
+      padding:4px 7px;
+      font-size:9px;
+      text-transform:uppercase;
+    }
+
+    .project-footer{
+      position:absolute;
+      left:18px;
+      right:18px;
+      bottom:15px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      color:#466e51;
+      font-size:10px;
+    }
+
+    .launch{
+      color:var(--green);
+      opacity:.85;
+    }
+
+    .wip .launch{color:var(--amber)}
+
+    .empty{
+      grid-column:1/-1;
+      border:1px dashed var(--line);
+      padding:40px;
+      text-align:center;
+      color:var(--muted);
+      display:none;
+    }
+
+    .footer{
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:20px;
+      padding:18px 22px;
+      border-top:1px solid var(--line);
+      color:#4d7257;
+      font-size:10px;
+      text-transform:uppercase;
+      letter-spacing:.1em;
+    }
+
+    .footer strong{color:var(--green)}
+
+    .boot{
+      position:fixed;
+      inset:0;
+      z-index:200;
+      background:#000;
+      color:var(--green);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:28px;
+      transition:opacity .6s ease, visibility .6s ease;
+    }
+    .boot.hide{opacity:0;visibility:hidden}
+    .boot-inner{
+      width:min(820px, 94vw);
+      font-size:13px;
+      line-height:1.7;
+    }
+    .boot-line{opacity:0;animation:appear .15s forwards}
+    @keyframes appear{to{opacity:1}}
+
+    .shortcut{
+      color:#4c7557;
+      font-size:10px;
+      margin-top:10px;
+    }
+
+    @media (max-width:950px){
+      .hero{grid-template-columns:1fr}
+      .hero-side{border-left:0;border-top:1px dashed var(--line);padding:22px 0 0}
+      .project,.project.featured{grid-column:span 6}
+      .controls{grid-template-columns:1fr}
+      .filter-buttons{justify-content:flex-start}
+    }
+
+    @media (max-width:650px){
+      .shell{width:96vw;padding-top:10px}
+      .hero{padding:26px 18px 20px}
+      .content{padding:12px}
+      .project,.project.featured{grid-column:1/-1;min-height:220px}
+      .controls{padding:10px;position:relative}
+      .filter-buttons{display:grid;grid-template-columns:repeat(3,1fr)}
+      button{padding:0 8px}
+      .footer{grid-template-columns:1fr}
+      .terminal-bar .terminal-path{display:none}
+    }
+  </style>
+</head>
+<body>
+  <canvas id="matrix"></canvas>
+  <div class="vignette"></div>
+
+  <div class="boot" id="boot">
+    <div class="boot-inner" id="bootText"></div>
+  </div>
+
+  <main class="shell">
+    <section class="terminal">
+      <div class="terminal-bar">
+        <div class="terminal-bar-left">
+          <span class="dot red"></span>
+          <span class="dot yellow"></span>
+          <span class="dot green"></span>
+          <span class="terminal-path">shanny@dev-machine: ~/github/projects</span>
+        </div>
+        <div class="status-pulse">SYSTEM ONLINE</div>
+      </div>
+
+      <header class="hero">
+        <div>
+          <div class="prompt">root@portfolio:~$ ./launch_project_directory.sh</div>
+          <h1>PROJECT<span>COMMAND CENTER</span></h1>
+          <p class="hero-copy">
+            A private-ish visual index for quickly launching GitHub projects, prototypes,
+            experiments and works in progress. Built like a terminal because regular bookmarks are boring.
+          </p>
+          <div class="typing-line">
+            <span id="typed"></span><span class="cursor"></span>
+          </div>
+          <div class="shortcut">TIP: PRESS "/" TO SEARCH · PRESS "ESC" TO CLEAR</div>
+        </div>
+
+        <aside class="hero-side">
+          <div class="meta-list">
+            <div class="meta-row"><span>HOST</span><strong>GitHub Pages</strong></div>
+            <div class="meta-row"><span>MODE</span><strong>DEV / LAB</strong></div>
+            <div class="meta-row"><span>ACCESS</span><strong>ONE CLICK</strong></div>
+            <div class="meta-row"><span>BUILD</span><strong id="buildDate">--</strong></div>
+          </div>
+          <div class="big-count">
+            <span id="liveCount">0</span>
+            <small>ACTIVE ENDPOINTS</small>
+          </div>
+        </aside>
+      </header>
+
+      <div class="controls">
+        <label class="search-wrap">
+          <span>&gt;_</span>
+          <input id="search" type="search" placeholder="grep projects... e.g. rental, offscript, cleaning" autocomplete="off" />
+        </label>
+
+        <div class="filter-buttons">
+          <button class="active" data-filter="all">ALL</button>
+          <button data-filter="live">LIVE</button>
+          <button data-filter="wip">WIP</button>
+        </div>
+      </div>
+
+      <section class="content">
+        <div class="section-heading">
+          <h2>// deployed_projects</h2>
+          <span id="resultCount">0 nodes found</span>
+        </div>
+
+        <div class="grid" id="projectGrid"></div>
+        <div class="empty" id="emptyState">NO MATCHING PROJECTS FOUND_</div>
+      </section>
+
+      <footer class="footer">
+        <div>
+          <strong>SHANNY // DEV ARCHIVE</strong> · github project launcher
+        </div>
+        <div>STATUS: <strong>OPERATIONAL</strong></div>
+      </footer>
+    </section>
+  </main>
+
+  <script>
+    // ==========================================================
+    // PROJECT DATA
+    // Add new projects here. Duplicate an object and change values.
+    // For a WIP project without a URL, leave url: "".
+    // ==========================================================
+    const projects = [
+      {
+        name: "MLS",
+        status: "live",
+        url: "https://shannypigo-cloud.github.io/spi-mls-portfolio/",
+        description: "MLS portfolio / property-focused web project.",
+        tags: ["github-pages", "portfolio", "real-estate"],
+        featured: true
+      },
+      {
+        name: "SRQ Rental Car",
+        status: "live",
+        url: "https://shannypigo-cloud.github.io/srq-rental-car/",
+        description: "Rental operations system for vehicles, rentals, customers, maintenance and reporting.",
+        tags: ["fleet", "rental", "dashboard", "apps-script"],
+        featured: false
+      },
+      {
+        name: "Vicky Cleaning",
+        status: "live",
+        url: "https://shannypigo-cloud.github.io/VGCS-app/",
+        description: "Cleaning operations app for visits, clients, workers, scheduling and field activity.",
+        tags: ["operations", "cleaning", "admin"],
+        featured: false
+      },
+      {
+        name: "OffScript",
+        status: "live",
+        url: "https://shannypigo-cloud.github.io/OffScript/",
+        description: "Event engagement and gamification experience with social interaction concepts.",
+        tags: ["events", "engagement", "social"],
+        featured: true
+      },
+      {
+        name: "Mako41",
+        status: "live",
+        url: "https://shannypigo-cloud.github.io/Mako41/tablero/main.html",
+        description: "Special event dashboard / party experience built around the OffScript concept.",
+        tags: ["event", "party", "dashboard"],
+        featured: false
+      },
+      {
+        name: "2431 Cruise",
+        status: "live",
+        url: "https://shannypigo-cloud.github.io/2431CRUCERO/main.html",
+        description: "Cruise event experience and interactive event page.",
+        tags: ["cruise", "event", "interactive"],
+        featured: false
+      },
+      {
+        name: "Agency Command Center",
+        status: "live",
+        url: "https://shannypigo-cloud.github.io/2431CRUCERO/main.html",
+        description: "Agency command center link currently points to the URL provided for 2431 Cruise. Update this URL when the dedicated endpoint is available.",
+        tags: ["agency", "command-center", "admin"],
+        featured: false
+      },
+      {
+        name: "Sunshine Wallpaper Install",
+        status: "wip",
+        url: "",
+        description: "Work in progress. Landing page / business site and customer workflow project.",
+        tags: ["wip", "business", "landing-page"],
+        featured: false
+      },
+      {
+        name: "941 Auto Deals",
+        status: "wip",
+        url: "",
+        description: "Work in progress. Auto dealer site and inventory management experience.",
+        tags: ["wip", "automotive", "inventory"],
+        featured: false
+      }
+    ];
+
+    const grid = document.getElementById("projectGrid");
+    const search = document.getElementById("search");
+    const resultCount = document.getElementById("resultCount");
+    const emptyState = document.getElementById("emptyState");
+    const buttons = [...document.querySelectorAll("[data-filter]")];
+    let activeFilter = "all";
+
+    function escapeHTML(value = "") {
+      return value.replace(/[&<>"']/g, char => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"
+      }[char]));
+    }
+
+    function renderProjects() {
+      const q = search.value.trim().toLowerCase();
+
+      const filtered = projects.filter(project => {
+        const inFilter = activeFilter === "all" || project.status === activeFilter;
+        const searchable = [
+          project.name,
+          project.description,
+          ...project.tags,
+          project.status
+        ].join(" ").toLowerCase();
+
+        return inFilter && searchable.includes(q);
+      });
+
+      grid.innerHTML = filtered.map((project, i) => {
+        const clickable = project.url ? `data-url="${project.url}" tabindex="0" role="link"` : "";
+        const featured = project.featured ? " featured" : "";
+        const wip = project.status === "wip" ? " wip" : "";
+        const badge = project.status === "live" ? "LIVE" : "WIP";
+        const launchText = project.url ? "[ OPEN PROJECT ↗ ]" : "[ BUILD PENDING ]";
+
+        return `
+          <article class="project${featured}${wip}" ${clickable}>
+            <div class="project-head">
+              <div>
+                <div class="project-index">NODE_${String(i + 1).padStart(2, "0")}</div>
+                <h3>${escapeHTML(project.name)}</h3>
+              </div>
+              <span class="badge ${project.status}">${badge}</span>
+            </div>
+
+            <p>${escapeHTML(project.description)}</p>
+
+            <div class="tags">
+              ${project.tags.map(tag => `<span class="tag">${escapeHTML(tag)}</span>`).join("")}
+            </div>
+
+            <div class="project-footer">
+              <span>${project.url ? "endpoint: online" : "endpoint: pending"}</span>
+              <span class="launch">${launchText}</span>
+            </div>
+          </article>
+        `;
+      }).join("");
+
+      resultCount.textContent = `${filtered.length} node${filtered.length === 1 ? "" : "s"} found`;
+      emptyState.style.display = filtered.length ? "none" : "block";
+
+      document.querySelectorAll(".project[data-url]").forEach(card => {
+        const open = () => window.open(card.dataset.url, "_blank", "noopener,noreferrer");
+        card.addEventListener("click", open);
+        card.addEventListener("keydown", e => {
+          if (e.key === "Enter" || e.key === " ") open();
+        });
+      });
+    }
+
+    buttons.forEach(button => {
+      button.addEventListener("click", () => {
+        buttons.forEach(btn => btn.classList.remove("active"));
+        button.classList.add("active");
+        activeFilter = button.dataset.filter;
+        renderProjects();
+      });
+    });
+
+    search.addEventListener("input", renderProjects);
+
+    document.addEventListener("keydown", e => {
+      if (e.key === "/" && document.activeElement !== search) {
+        e.preventDefault();
+        search.focus();
+      }
+      if (e.key === "Escape") {
+        search.value = "";
+        search.blur();
+        renderProjects();
+      }
+    });
+
+    const liveCount = projects.filter(p => p.status === "live").length;
+    document.getElementById("liveCount").textContent = liveCount;
+    document.getElementById("buildDate").textContent =
+      new Intl.DateTimeFormat("en-US", {year:"numeric", month:"short", day:"2-digit"})
+        .format(new Date()).toUpperCase();
+
+    // Boot animation
+    const bootLines = [
+      "[ OK ] initializing project registry...",
+      "[ OK ] connecting to github-pages endpoints...",
+      "[ OK ] loading deployed nodes...",
+      "[ OK ] indexing works in progress...",
+      "[ OK ] matrix renderer online...",
+      "[ READY ] project command center initialized."
+    ];
+
+    const bootText = document.getElementById("bootText");
+    bootLines.forEach((line, index) => {
+      const el = document.createElement("div");
+      el.className = "boot-line";
+      el.style.animationDelay = `${index * 0.12}s`;
+      el.textContent = line;
+      bootText.appendChild(el);
+    });
+
+    setTimeout(() => {
+      document.getElementById("boot").classList.add("hide");
+    }, 1350);
+
+    // Terminal typing
+    const phrases = [
+      "7 deployed nodes detected. 2 builds pending...",
+      "click any LIVE node to launch project...",
+      "search registry with / keyboard shortcut...",
+      "portfolio system ready."
+    ];
+
+    let phraseIndex = 0;
+    let charIndex = 0;
+    let deleting = false;
+    const typed = document.getElementById("typed");
+
+    function typeLoop() {
+      const current = phrases[phraseIndex];
+
+      if (!deleting) {
+        typed.textContent = current.slice(0, ++charIndex);
+        if (charIndex === current.length) {
+          deleting = true;
+          setTimeout(typeLoop, 1500);
+          return;
+        }
+      } else {
+        typed.textContent = current.slice(0, --charIndex);
+        if (charIndex === 0) {
+          deleting = false;
+          phraseIndex = (phraseIndex + 1) % phrases.length;
+        }
+      }
+      setTimeout(typeLoop, deleting ? 24 : 42);
+    }
+
+    // Matrix rain
+    const canvas = document.getElementById("matrix");
+    const ctx = canvas.getContext("2d");
+    const chars = "01アイウエオカキクケコサシスセソABCDEFGHIJKLMNOPQRSTUVWXYZ$#@%&*<>/";
+    let fontSize = 14;
+    let columns = 0;
+    let drops = [];
+
+    function resizeMatrix() {
+      canvas.width = window.innerWidth * devicePixelRatio;
+      canvas.height = window.innerHeight * devicePixelRatio;
+      canvas.style.width = window.innerWidth + "px";
+      canvas.style.height = window.innerHeight + "px";
+      ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+
+      columns = Math.floor(window.innerWidth / fontSize);
+      drops = Array(columns).fill(1);
+    }
+
+    function drawMatrix() {
+      ctx.fillStyle = "rgba(0, 5, 2, 0.09)";
+      ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+      ctx.fillStyle = "#4cff78";
+      ctx.font = `${fontSize}px monospace`;
+
+      drops.forEach((y, i) => {
+        const text = chars[Math.floor(Math.random() * chars.length)];
+        const x = i * fontSize;
+        ctx.fillText(text, x, y * fontSize);
+
+        if (y * fontSize > window.innerHeight && Math.random() > 0.975) {
+          drops[i] = 0;
+        }
+        drops[i]++;
+      });
+
+      requestAnimationFrame(drawMatrix);
+    }
+
+    window.addEventListener("resize", resizeMatrix);
+
+    resizeMatrix();
+    renderProjects();
+    typeLoop();
+    drawMatrix();
+  </script>
+</body>
+</html>

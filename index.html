@@ -642,6 +642,14 @@
         featured: false
       },
       {
+        name: "MSMP Prospect Onboarding Hub",
+        status: "live",
+        url: "https://shannypigo-cloud.github.io/MSMP-Prospect-Onboarding-Hub/",
+        description: "CRM-style prospect and onboarding hub for MSMP to organize leads, client setup, communications and workflow.",
+        tags: ["msmp", "crm", "prospects", "onboarding"],
+        featured: true
+      },
+      {
         name: "Sunshine Wallpaper Install",
         status: "wip",
         url: "",
@@ -784,7 +792,7 @@
 
     // Terminal typing
     const phrases = [
-      "7 deployed nodes detected. 2 builds pending...",
+      `${projects.filter(p => p.status === "live").length} deployed nodes detected. ${projects.filter(p => p.status === "wip").length} builds pending...`,
       "click any LIVE node to launch project...",
       "search registry with / keyboard shortcut...",
       "portfolio system ready."
